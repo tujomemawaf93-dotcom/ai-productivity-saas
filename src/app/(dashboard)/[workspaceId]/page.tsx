@@ -21,10 +21,11 @@ import {
   Eye,
   Trash
 } from "lucide-react";
-import { GlassCard } from "@/components/shared/GlassCard";
-import { Button } from "@/components/shared/FormElements";
-import { PageContainer } from "@/components/shared/PageContainer";
-import { Modal } from "@/components/shared/Modal";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { Button } from "@/components/ui/Button";
+import { PageContainer } from "@/components/ui/PageContainer";
+import { Modal } from "@/components/ui/Modal";
+import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 
 // Импортируем компоненты Recharts
@@ -49,6 +50,14 @@ const chartData = [
   { name: "Вс", focus: 88, tasks: 5 },
 ];
 
+const tagVariants: Record<string, "product" | "engineering" | "design" | "amber" | "zinc"> = {
+  Product: "product",
+  Engineering: "engineering",
+  Design: "design",
+  Marketing: "amber",
+  General: "zinc"
+};
+
 export default function WorkspaceDashboardPage() {
   const params = useParams();
   const workspaceId = params.workspaceId as string;
@@ -61,9 +70,9 @@ export default function WorkspaceDashboardPage() {
   }, []);
 
   const [recentNotes, setRecentNotes] = useState([
-    { id: 1, title: "Product Requirements Document (PRD)", time: "2 мин назад", tag: "Product", tagColor: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
-    { id: 2, title: "Архитектура Векторного Поиска", time: "1 час назад", tag: "Engineering", tagColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
-    { id: 3, title: "Редизайн Дизайн-Системы (v2.0)", time: "Вчера", tag: "Design", tagColor: "text-violet-400 bg-violet-500/10 border-violet-500/20" },
+    { id: 1, title: "Product Requirements Document (PRD)", time: "2 мин назад", tag: "Product" },
+    { id: 2, title: "Архитектура Векторного Поиска", time: "1 час назад", tag: "Engineering" },
+    { id: 3, title: "Редизайн Дизайн-Системы (v2.0)", time: "Вчера", tag: "Design" },
   ]);
 
   const [activities, setActivities] = useState([
@@ -234,9 +243,9 @@ export default function WorkspaceDashboardPage() {
                       <p className="text-sm font-semibold text-zinc-200">{note.title}</p>
                       <p className="text-xxs text-zinc-500 mt-1">Отредактировано {note.time}</p>
                     </div>
-                    <span className={cn("px-2 py-0.5 rounded text-xxs font-semibold border shrink-0", note.tagColor)}>
+                    <Badge variant={tagVariants[note.tag] || "zinc"}>
                       {note.tag}
-                    </span>
+                    </Badge>
                   </div>
                 ))}
               </div>

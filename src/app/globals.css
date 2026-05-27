@@ -28,6 +28,13 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
   
+  --font-size-xxs: 0.625rem;
+  
+  --spacing-card-padding: 1.5rem;
+  --spacing-widget-gap: 1.5rem;
+  --spacing-nav-gap: 0.375rem;
+  --spacing-item-padding: 0.75rem;
+  
   --animate-pulse-slow: pulse-slow 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 

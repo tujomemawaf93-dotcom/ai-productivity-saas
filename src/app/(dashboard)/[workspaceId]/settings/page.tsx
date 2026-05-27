@@ -15,9 +15,11 @@ import {
   EyeOff,
   Sliders
 } from "lucide-react";
-import { PageContainer } from "@/components/shared/PageContainer";
-import { GlassCard } from "@/components/shared/GlassCard";
-import { Button, Input } from "@/components/shared/FormElements";
+import { PageContainer } from "@/components/ui/PageContainer";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
@@ -95,9 +97,7 @@ export default function SettingsPage() {
                   </div>
                   
                   <div className="flex items-center space-x-4">
-                    <div className="h-16 w-16 rounded-full bg-gradient-to-tr from-violet-600 to-fuchsia-500 flex items-center justify-center font-bold text-xl text-white">
-                      JD
-                    </div>
+                    <Avatar variant="gradient" size="lg" initials="JD" />
                     <Button variant="secondary" size="sm" type="button">Сменить фото</Button>
                   </div>
 

@@ -1,13 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-
-interface Workspace {
-  id: string;
-  name: string;
-  slug: string;
-  logoColor: string;
-}
+import { Workspace } from "@/types/workspace";
 
 interface UIState {
   sidebarCollapsed: boolean;
@@ -17,7 +11,7 @@ interface UIState {
   commandPaletteOpen: boolean;
   setCommandPaletteOpen: (open: boolean) => void;
   toggleCommandPalette: () => void;
-
+  
   activeWorkspace: Workspace;
   setActiveWorkspace: (workspace: Workspace) => void;
   workspaces: Workspace[];
@@ -36,7 +30,7 @@ export const useUIStore = create<UIState>((set) => ({
     id: "ws-1",
     name: "Design Synapse",
     slug: "design-synapse",
-    logoColor: "from-violet-600 to-fuchsia-500",
+    theme: "purple",
   },
   setActiveWorkspace: (workspace) => set({ activeWorkspace: workspace }),
   workspaces: [
@@ -44,19 +38,19 @@ export const useUIStore = create<UIState>((set) => ({
       id: "ws-1",
       name: "Design Synapse",
       slug: "design-synapse",
-      logoColor: "from-violet-600 to-fuchsia-500",
+      theme: "purple",
     },
     {
       id: "ws-2",
       name: "Vercel Alpha",
       slug: "vercel-alpha",
-      logoColor: "from-blue-600 to-cyan-500",
+      theme: "blue",
     },
     {
       id: "ws-3",
       name: "Personal Lab",
       slug: "personal-lab",
-      logoColor: "from-amber-500 to-orange-600",
+      theme: "amber",
     },
   ],
 }));

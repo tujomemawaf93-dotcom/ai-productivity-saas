@@ -14,9 +14,9 @@ import {
   CheckCircle2,
   RefreshCw
 } from "lucide-react";
-import { PageContainer } from "@/components/shared/PageContainer";
-import { GlassCard } from "@/components/shared/GlassCard";
-import { Button } from "@/components/shared/FormElements";
+import { PageContainer } from "@/components/ui/PageContainer";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 interface CalendarEvent {

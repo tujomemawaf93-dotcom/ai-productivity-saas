@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useRef } from "react";
-import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -18,15 +17,15 @@ export function GlassCard({
   spotlight = true,
   ...props
 }: GlassCardProps) {
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  function handleMouseMove({ clientX, clientY }: React.MouseEvent) {
-    if (!cardRef.current) return;
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    if (!spotlight || !cardRef.current) return;
     const { left, top } = cardRef.current.getBoundingClientRect();
-    mouseX.set(clientX - left);
-    mouseY.set(clientY - top);
+    const x = e.clientX - left;
+    const y = e.clientY - top;
+    cardRef.current.style.setProperty("--mouse-x", `${x}px`);
+    cardRef.current.style.setProperty("--mouse-y", `${y}px`);
   }
 
   return (
@@ -40,16 +39,14 @@ export function GlassCard({
       {...props}
     >
       {spotlight && (
-        <motion.div
+        <div
           className="pointer-events-none absolute -inset-px rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
           style={{
-            background: useMotionTemplate`
-              radial-gradient(
-                250px circle at ${mouseX}px ${mouseY}px,
-                ${glowColor},
-                transparent 80%
-              )
-            `,
+            background: `radial-gradient(
+              250px circle at var(--mouse-x, 0px) var(--mouse-y, 0px),
+              ${glowColor},
+              transparent 80%
+            )`,
           }}
         />
       )}

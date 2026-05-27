@@ -20,6 +20,13 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store/uiStore";
+import { Avatar } from "@/components/ui/Avatar";
+
+const themeGradients: Record<string, string> = {
+  purple: "from-violet-600 to-fuchsia-500",
+  blue: "from-blue-600 to-cyan-500",
+  amber: "from-amber-500 to-orange-600"
+};
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -61,12 +68,11 @@ export function Sidebar() {
           )}
         >
           <div className="flex items-center space-x-3">
-            <div className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-tr text-white shadow font-bold text-sm shrink-0",
-              activeWorkspace.logoColor
-            )}>
-              {activeWorkspace.name.substring(0, 2).toUpperCase()}
-            </div>
+            <Avatar 
+              variant="workspace" 
+              theme={activeWorkspace.theme} 
+              initials={activeWorkspace.name.substring(0, 2)} 
+            />
             {!sidebarCollapsed && (
               <div className="overflow-hidden">
                 <p className="text-sm font-semibold text-zinc-100 truncate">{activeWorkspace.name}</p>
@@ -99,9 +105,12 @@ export function Sidebar() {
                   }}
                   className="flex w-full items-center space-x-2.5 rounded-md px-2 py-2 text-left text-sm text-zinc-300 hover:bg-white/5 hover:text-white transition-all"
                 >
-                  <div className={cn("h-6 w-6 rounded-md bg-gradient-to-tr font-semibold text-xxs text-white flex items-center justify-center", ws.logoColor)}>
-                    {ws.name.substring(0, 2).toUpperCase()}
-                  </div>
+                  <Avatar 
+                    variant="workspace" 
+                    size="sm" 
+                    theme={ws.theme} 
+                    initials={ws.name.substring(0, 2)} 
+                  />
                   <span className="truncate">{ws.name}</span>
                 </button>
               ))}
@@ -168,12 +177,7 @@ export function Sidebar() {
       <div className="border-t border-white/5 p-4 flex flex-col space-y-3">
         <div className={cn("flex items-center justify-between", sidebarCollapsed ? "justify-center" : "")}>
           <div className="flex items-center space-x-3">
-            <div className="h-8 w-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-              {/* Mock Avatar */}
-              <div className="h-full w-full bg-gradient-to-tr from-violet-600/30 to-fuchsia-500/30 flex items-center justify-center font-semibold text-xs text-white">
-                JD
-              </div>
-            </div>
+            <Avatar variant="user" initials="JD" />
             {!sidebarCollapsed && (
               <div className="overflow-hidden">
                 <p className="text-sm font-semibold text-zinc-200 truncate">John Doe</p>

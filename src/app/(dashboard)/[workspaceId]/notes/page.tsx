@@ -14,9 +14,10 @@ import {
   ArrowUpRight,
   Filter
 } from "lucide-react";
-import { PageContainer } from "@/components/shared/PageContainer";
-import { GlassCard } from "@/components/shared/GlassCard";
-import { Button } from "@/components/shared/FormElements";
+import { PageContainer } from "@/components/ui/PageContainer";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 
 interface Note {
@@ -25,9 +26,16 @@ interface Note {
   preview: string;
   updatedAt: string;
   tag: string;
-  tagColor: string;
   starred?: boolean;
 }
+
+const tagVariants: Record<string, "product" | "engineering" | "design" | "amber" | "zinc"> = {
+  Product: "product",
+  Engineering: "engineering",
+  Design: "design",
+  Marketing: "amber",
+  General: "zinc"
+};
 
 export default function SmartNotesPage() {
   const params = useParams();
@@ -43,7 +51,6 @@ export default function SmartNotesPage() {
       preview: "Этот документ описывает ключевые требования к запуску MVP Aether OS, включая интеграцию с Gemini API, drag & drop виджетами и command palette...",
       updatedAt: "2 мин назад",
       tag: "Product",
-      tagColor: "bg-blue-500/10 text-blue-400 border-blue-500/20",
       starred: true
     },
     {
@@ -52,7 +59,6 @@ export default function SmartNotesPage() {
       preview: "Использование расширения pgvector в СУБД PostgreSQL позволяет хранить 1536-мерные эмбеддинги, генерируемые моделью text-embedding-004...",
       updatedAt: "1 час назад",
       tag: "Engineering",
-      tagColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
       starred: true
     },
     {
@@ -61,7 +67,6 @@ export default function SmartNotesPage() {
       preview: "Полное переосмысление темной и светлой темы. Новые HSL переменные, пружинные веса Framer Motion для перехода между элементами...",
       updatedAt: "Вчера",
       tag: "Design",
-      tagColor: "bg-violet-500/10 text-violet-400 border-violet-500/20",
       starred: false
     },
     {
@@ -70,7 +75,6 @@ export default function SmartNotesPage() {
       preview: "Основные инсайты для выхода на Product Hunt и Hacker News. Разработка интерактивного демо-стенда, сбор предзаказов через Waitlist...",
       updatedAt: "3 дня назад",
       tag: "Marketing",
-      tagColor: "bg-rose-500/10 text-rose-400 border-rose-500/20",
       starred: false
     }
   ]);
@@ -82,7 +86,6 @@ export default function SmartNotesPage() {
       preview: "Нажмите, чтобы начать писать...",
       updatedAt: "Только что",
       tag: "General",
-      tagColor: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
       starred: false
     };
     setNotes((prev) => [newNote, ...prev]);
@@ -183,9 +186,9 @@ export default function SmartNotesPage() {
               >
                 <div>
                   <div className="flex justify-between items-start mb-3">
-                    <span className={cn("px-2 py-0.5 rounded text-xxs font-semibold border", note.tagColor)}>
+                    <Badge variant={tagVariants[note.tag] || "zinc"}>
                       {note.tag}
-                    </span>
+                    </Badge>
                     <button className="text-zinc-500 hover:text-zinc-300">
                       <Star className={cn("h-4 w-4", note.starred && "fill-yellow-500 text-yellow-500")} />
                     </button>

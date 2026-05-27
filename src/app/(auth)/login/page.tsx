@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, ShieldCheck, Mail, Lock } from "lucide-react";
-import { GlassCard } from "@/components/shared/GlassCard";
-import { Button, Input } from "@/components/shared/FormElements";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,6 +25,8 @@ export default function LoginPage() {
     // Имитация входа для MVP
     setTimeout(() => {
       if (email && password) {
+        // Создаем имитационную сессию в куках
+        document.cookie = "aether-session=mock-active-user-session; path=/; max-age=86400";
         setIsLoading(false);
         // Перенаправляем во временный workspace
         router.push("/default-workspace");
