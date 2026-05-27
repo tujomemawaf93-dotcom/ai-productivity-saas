@@ -28,73 +28,7 @@ export function useChatStream(workspaceId: string) {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const simulateAISpanResponse = (userPrompt: string) => {
-    setIsTyping(true);
-    
-    setTimeout(() => {
-      setIsTyping(false);
-      
-      const fullResponseText = `Я проанализировал вашу команду по воркспейсу **${workspaceId}**.
-
-Вот подробная инструкция для реализации векторного поиска с использованием \`pgvector\`:
-
-\`\`\`sql
--- 1. Подключаем расширение pgvector в вашей СУБД PostgreSQL
-CREATE EXTENSION IF NOT EXISTS vector;
-
--- 2. Создаем таблицу для хранения эмбеддингов
-CREATE TABLE documents (
-    id bigserial PRIMARY KEY,
-    content text NOT NULL,
-    embedding vector(1536) -- Размерность для OpenAI text-embedding-004
-);
-
--- 3. Выполняем поиск по косинусному сходству
-SELECT id, content, 1 - (embedding <=> '[0.002, 0.003, ...]') AS similarity
-FROM documents
-ORDER BY similarity DESC
-LIMIT 5;
-\`\`\`
-
-Также я привязал это решение к вашему календарному обзору архитектуры на Пятницу. Хотите, чтобы я автоматически сгенерировал шаблон миграции для Prisma?`;
-
-      const newAiMsgId = Date.now().toString();
-      const aiMessage: Message = {
-        id: newAiMsgId,
-        role: "model",
-        content: "",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isStreaming: true
-      };
-
-      setMessages((prev) => [...prev, aiMessage]);
-
-      let index = 0;
-      const interval = setInterval(() => {
-        setMessages((prev) => 
-          prev.map((m) => {
-            if (m.id === newAiMsgId) {
-              const nextText = fullResponseText.substring(0, index + 3);
-              const isFinished = nextText.length >= fullResponseText.length;
-              if (isFinished) {
-                clearInterval(interval);
-              }
-              return {
-                ...m,
-                content: nextText,
-                isStreaming: !isFinished
-              };
-            }
-            return m;
-          })
-        );
-        index += 3;
-      }, 10);
-
-    }, 1200);
-  };
-
-  const handleSendMessage = (e?: React.FormEvent, promptOverride?: string) => {
+  const handleSendMessage = async (e?: React.FormEvent, promptOverride?: string) => {
     e?.preventDefault();
     const activePrompt = promptOverride || input;
     if (!activePrompt.trim()) return;
@@ -106,7 +40,8 @@ LIMIT 5;
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInput("");
     setAttachedFile(null);
     
@@ -115,7 +50,69 @@ LIMIT 5;
       setChatHistory((prev) => [{ id: Date.now().toString(), title: historyTitle, time: "Только что" }, ...prev]);
     }
 
-    simulateAISpanResponse(activePrompt);
+    setIsTyping(true);
+
+    const newAiMsgId = (Date.now() + 1).toString();
+    const aiMessage: Message = {
+      id: newAiMsgId,
+      role: "model",
+      content: "",
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isStreaming: true
+    };
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: updatedMessages }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Не удалось получить ответ от ИИ.");
+      }
+
+      setIsTyping(false);
+      setMessages((prev) => [...prev, aiMessage]);
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) return;
+
+      let accumulatedContent = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        accumulatedContent += chunk;
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === newAiMsgId ? { ...m, content: accumulatedContent } : m
+          )
+        );
+      }
+
+      // Убираем флаг стриминга
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === newAiMsgId ? { ...m, isStreaming: false } : m
+        )
+      );
+
+    } catch (err: any) {
+      setIsTyping(false);
+      const errorMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        role: "model",
+        content: "🚨 Ошибка ИИ чата Aether. Убедитесь, что в переменных окружения настроен `GEMINI_API_KEY`, или сервер доступен.",
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    }
   };
 
   const handleDrag = (e: React.DragEvent) => {

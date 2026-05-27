@@ -3,14 +3,16 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, ShieldCheck, Mail, Lock } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { useSignIn } from "@/lib/clerk";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { signIn } = useSignIn();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,19 +24,19 @@ export default function LoginPage() {
     setIsLoading(true);
     setError("");
 
-    // Имитация входа для MVP
-    setTimeout(() => {
+    try {
       if (email && password) {
-        // Создаем имитационную сессию в куках
-        document.cookie = "aether-session=mock-active-user-session; path=/; max-age=86400";
+        await signIn.create({ identifier: email });
         setIsLoading(false);
-        // Перенаправляем во временный workspace
         router.push("/default-workspace");
       } else {
         setIsLoading(false);
         setError("Пожалуйста, заполните все поля.");
       }
-    }, 1500);
+    } catch (err: any) {
+      setIsLoading(false);
+      setError(err.message || "Неверный логин или пароль.");
+    }
   };
 
   return (
@@ -63,7 +65,25 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <GlassCard className="p-8 border-white/5 bg-zinc-950/40 relative">
+      <GlassCard className="p-8 border-white/5 bg-zinc-950/40 relative overflow-hidden">
+        {/* Loading Overlay */}
+        <AnimatePresence>
+          {isLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-zinc-950/85 backdrop-blur-sm z-30 flex flex-col items-center justify-center rounded-xl"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600/10 to-fuchsia-500/10 border border-violet-500/30 shadow-lg shadow-violet-500/10 mb-3 animate-pulse">
+                <ShieldCheck className="h-6 w-6 text-violet-400" />
+              </div>
+              <p className="text-xs font-semibold text-zinc-300">Авторизация...</p>
+              <p className="text-[10px] text-zinc-500 mt-1">Сессия Aether OS шифруется</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <form onSubmit={handleLogin} className="space-y-5">
           <Input
             label="Email"

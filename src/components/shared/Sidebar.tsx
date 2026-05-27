@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store/uiStore";
 import { Avatar } from "@/components/ui/Avatar";
+import { useUser, useAuth } from "@/lib/clerk";
 
 const themeGradients: Record<string, string> = {
   purple: "from-violet-600 to-fuchsia-500",
@@ -38,10 +39,18 @@ export function Sidebar() {
     setActiveWorkspace 
   } = useUIStore();
   const [showWorkspaceDropdown, setShowWorkspaceDropdown] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  const { user } = useUser();
+  const { signOut } = useAuth();
 
   const params = useParams();
   const workspaceSlug = (params?.workspaceId as string) || activeWorkspace.slug;
+
+  const userInitials = user?.fullName
+    ? user.fullName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()
+    : "JD";
 
   const navItems = [
     { name: "Главная", icon: Home, path: `/${workspaceSlug}` },
@@ -174,21 +183,72 @@ export function Sidebar() {
       </nav>
 
       {/* Bottom Profile Area */}
-      <div className="border-t border-white/5 p-4 flex flex-col space-y-3">
+      <div className="border-t border-white/5 p-4 flex flex-col space-y-3 relative">
+        {/* Profile Dropdown Popover */}
+        <AnimatePresence>
+          {showProfileDropdown && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="absolute bottom-16 left-4 right-4 z-50 rounded-xl border border-white/10 bg-zinc-950/95 p-3 backdrop-blur-xl shadow-2xl space-y-2"
+            >
+              <div className="flex items-center space-x-3 pb-2 border-b border-white/5">
+                <Avatar variant="user" initials={userInitials} size="sm" />
+                <div className="overflow-hidden">
+                  <p className="text-xs font-semibold text-zinc-200 truncate">{user?.fullName || "John Doe"}</p>
+                  <p className="text-[10px] text-zinc-500 truncate">{user?.primaryEmailAddress?.emailAddress || "john@aether.os"}</p>
+                </div>
+              </div>
+              
+              <Link 
+                href={`/${workspaceSlug}/settings`} 
+                onClick={() => setShowProfileDropdown(false)}
+                className="flex items-center space-x-2 w-full text-left px-2.5 py-1.5 text-xs text-zinc-400 hover:bg-white/5 hover:text-white rounded-lg transition-colors"
+              >
+                <Settings className="h-3.5 w-3.5" />
+                <span>Настройки</span>
+              </Link>
+              
+              <button 
+                onClick={() => {
+                  setShowProfileDropdown(false);
+                  signOut();
+                }}
+                className="flex items-center space-x-2 w-full text-left px-2.5 py-1.5 text-xs text-red-400/80 hover:bg-red-500/10 hover:text-red-400 rounded-lg transition-colors"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                <span>Выйти из системы</span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className={cn("flex items-center justify-between", sidebarCollapsed ? "justify-center" : "")}>
-          <div className="flex items-center space-x-3">
-            <Avatar variant="user" initials="JD" />
+          <button 
+            onClick={() => !sidebarCollapsed && setShowProfileDropdown(!showProfileDropdown)}
+            className="flex items-center space-x-3 text-left w-full hover:bg-white/5 p-1 rounded-lg transition-all"
+          >
+            <Avatar variant="user" initials={userInitials} />
             {!sidebarCollapsed && (
-              <div className="overflow-hidden">
-                <p className="text-sm font-semibold text-zinc-200 truncate">John Doe</p>
-                <p className="text-xs text-zinc-500 truncate">john@aether.os</p>
+              <div className="overflow-hidden flex-1 pr-2">
+                <p className="text-sm font-semibold text-zinc-200 truncate">{user?.fullName || "John Doe"}</p>
+                <p className="text-xs text-zinc-500 truncate">{user?.primaryEmailAddress?.emailAddress || "john@aether.os"}</p>
               </div>
             )}
-          </div>
-          {!sidebarCollapsed && (
-            <Link href="/login" className="text-zinc-500 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-white/5">
+            {!sidebarCollapsed && (
+              <ChevronDown className="h-3.5 w-3.5 text-zinc-500 hover:text-white shrink-0 transition-transform" style={{ transform: showProfileDropdown ? 'rotate(180deg)' : 'none' }} />
+            )}
+          </button>
+          
+          {sidebarCollapsed && (
+            <button 
+              onClick={() => signOut()}
+              className="text-zinc-500 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-white/5 mt-1"
+            >
               <LogOut className="h-4 w-4" />
-            </Link>
+            </button>
           )}
         </div>
 

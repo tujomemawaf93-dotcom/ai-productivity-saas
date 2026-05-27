@@ -1,0 +1,101 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Модель Пользователя (связана с аккаунтом Clerk/Auth)
+model User {
+  id           String        @id
+  email        String        @unique
+  name         String?
+  imageUrl     String?
+  workspaces   Workspace[]   @relation("WorkspaceOwner")
+  notes        Note[]
+  chatSessions ChatSession[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("users")
+}
+
+// Модель Рабочей Области (Workspace)
+model Workspace {
+  id                 String              @id @default(uuid())
+  name               String
+  slug               String              @unique
+  theme              String              @default("purple") // "purple" | "blue" | "amber"
+  userId             String
+  user               User                @relation("WorkspaceOwner", fields: [userId], references: [id], onDelete: Cascade)
+  notes              Note[]
+  chatSessions       ChatSession[]
+  analyticsSnapshots AnalyticsSnapshot[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@map("workspaces")
+}
+
+// Модель Умной Заметки (Note)
+model Note {
+  id          String    @id @default(uuid())
+  title       String
+  content     String    @db.Text
+  category    String    @default("General") // "Product" | "Design" | "Engineering" | "Marketing" | "General"
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("notes")
+}
+
+// Модель ИИ Сессии Чата (ChatSession)
+model ChatSession {
+  id          String    @id @default(uuid())
+  title       String
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    Message[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("chat_sessions")
+}
+
+// Модель Сообщения в Чате (Message)
+model Message {
+  id        String      @id @default(uuid())
+  role      String      @default("user") // "user" | "assistant" | "system"
+  content   String      @db.Text
+  fileUrl   String?
+  fileName  String?
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+
+  @@map("messages")
+}
+
+// Модель Аналитического Слепка (AnalyticsSnapshot)
+model AnalyticsSnapshot {
+  id             String    @id @default(uuid())
+  workspaceId    String
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  focusScore     Int       @default(0)
+  tasksCompleted Int       @default(0)
+  tasksTotal     Int       @default(0)
+  aiTimeSaved    Float     @default(0.0)
+  activeHours    Float     @default(0.0)
+  recordedAt     DateTime  @default(now())
+
+  @@map("analytics_snapshots")
+}

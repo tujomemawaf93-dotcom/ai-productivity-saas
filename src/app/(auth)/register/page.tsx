@@ -3,14 +3,16 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { Eye, EyeOff, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Eye, EyeOff, Check, ShieldCheck } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { useSignUp } from "@/lib/clerk";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { signUp } = useSignUp();
   const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -23,19 +25,19 @@ export default function RegisterPage() {
     setIsLoading(true);
     setError("");
 
-    // Имитация создания аккаунта для MVP
-    setTimeout(() => {
+    try {
       if (name && email && password) {
-        // Создаем имитационную сессию в куках
-        document.cookie = "aether-session=mock-active-user-session; path=/; max-age=86400";
+        await signUp.create({ emailAddress: email, firstName: name });
         setIsLoading(false);
-        // Перенаправляем во временный workspace
         router.push("/default-workspace");
       } else {
         setIsLoading(false);
         setError("Пожалуйста, заполните все поля.");
       }
-    }, 1500);
+    } catch (err: any) {
+      setIsLoading(false);
+      setError(err.message || "Ошибка регистрации.");
+    }
   };
 
   return (
@@ -64,7 +66,25 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      <GlassCard className="p-8 border-white/5 bg-zinc-950/40 relative">
+      <GlassCard className="p-8 border-white/5 bg-zinc-950/40 relative overflow-hidden">
+        {/* Loading Overlay */}
+        <AnimatePresence>
+          {isLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-zinc-950/85 backdrop-blur-sm z-30 flex flex-col items-center justify-center rounded-xl"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600/10 to-fuchsia-500/10 border border-violet-500/30 shadow-lg shadow-violet-500/10 mb-3 animate-pulse">
+                <ShieldCheck className="h-6 w-6 text-violet-400" />
+              </div>
+              <p className="text-xs font-semibold text-zinc-300">Регистрация...</p>
+              <p className="text-[10px] text-zinc-500 mt-1">Создаем безопасный аккаунт</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <form onSubmit={handleRegister} className="space-y-5">
           <Input
             label="Имя и Фамилия"

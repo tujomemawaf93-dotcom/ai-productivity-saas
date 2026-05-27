@@ -18,10 +18,18 @@ export function proxy(request: NextRequest) {
   // Считываем сессию из кук (созданную при входе / регистрации)
   const session = request.cookies.get("aether-session");
 
-  // Если сессии нет, перенаправляем на логин
+  // Если сессии нет и путь защищен, перенаправляем на логин
   if (!session) {
-    const loginUrl = new URL("/login", request.url);
-    return NextResponse.redirect(loginUrl);
+    if (pathname !== "/login" && pathname !== "/register") {
+      const loginUrl = new URL("/login", request.url);
+      return NextResponse.redirect(loginUrl);
+    }
+  } else {
+    // Если сессия есть, не даем заходить на /login, /register и / и сразу перенаправляем во фреймворк
+    if (pathname === "/" || pathname === "/login" || pathname === "/register") {
+      const workspaceUrl = new URL("/default-workspace", request.url);
+      return NextResponse.redirect(workspaceUrl);
+    }
   }
 
   return NextResponse.next();
