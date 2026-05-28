@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useParams } from "next/navigation";
-import { Bot, Trash2 } from "lucide-react";
+import { Bot, Trash2, Plus } from "lucide-react";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { Button } from "@/components/ui/Button";
 
@@ -22,6 +22,9 @@ export default function AIChatPage() {
     setInput,
     messages,
     chatHistory,
+    activeSessionId,
+    setActiveSessionId,
+    isLoadingHistory,
     isTyping,
     copiedId,
     attachedFile,
@@ -32,7 +35,9 @@ export default function AIChatPage() {
     handleSendMessage,
     handleDrag,
     handleDrop,
-    clearHistory
+    clearHistory,
+    deleteChat,
+    renameChat,
   } = useChatStream(workspaceId);
 
   return (
@@ -40,10 +45,22 @@ export default function AIChatPage() {
       title="Aether AI Чат"
       description="Премиальный интеллектуальный диалог с глубоким пониманием файлов вашей рабочей области"
       action={
-        <Button variant="secondary" size="sm" onClick={clearHistory} className="flex items-center space-x-1">
-          <Trash2 className="h-3.5 w-3.5 text-zinc-400 group-hover:text-red-400" />
-          <span>Очистить чат</span>
-        </Button>
+        activeSessionId ? (
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            onClick={() => deleteChat(activeSessionId)} 
+            className="flex items-center space-x-1 hover:border-red-500/30 hover:bg-red-500/5 group text-zinc-400 hover:text-red-400 transition-all duration-200"
+          >
+            <Trash2 className="h-3.5 w-3.5 text-zinc-500 group-hover:text-red-400 transition-colors" />
+            <span>Удалить диалог</span>
+          </Button>
+        ) : (
+          <Button variant="secondary" size="sm" onClick={clearHistory} className="flex items-center space-x-1">
+            <Plus className="h-3.5 w-3.5 text-zinc-500" />
+            <span>Новый диалог</span>
+          </Button>
+        )
       }
     >
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-14rem)]">
@@ -52,8 +69,12 @@ export default function AIChatPage() {
         <div className="hidden lg:flex flex-col space-y-4 h-full">
           <ChatHistory 
             chatHistory={chatHistory} 
-            onHistoryClick={(p) => handleSendMessage(undefined, p)} 
+            activeSessionId={activeSessionId}
+            onSessionSelect={setActiveSessionId}
             onNewChat={clearHistory} 
+            onRenameChat={renameChat}
+            onDeleteChat={deleteChat}
+            isLoading={isLoadingHistory}
           />
         </div>
 

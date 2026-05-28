@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @theme {
   --color-background: var(--background);
@@ -102,3 +103,17 @@ body {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
+
+/* TipTap Editor Overrides */
+.TipTapEditor .ProseMirror:focus {
+  outline: none !important;
+}
+
+.TipTapEditor .ProseMirror p.is-editor-empty:first-child::before {
+  color: #52525b; /* text-zinc-600 */
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+

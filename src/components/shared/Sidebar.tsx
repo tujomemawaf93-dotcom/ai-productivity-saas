@@ -4,14 +4,14 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Home, 
-  MessageSquare, 
-  FileText, 
-  Calendar, 
-  BarChart3, 
-  Settings, 
-  ChevronLeft, 
+import {
+  Home,
+  MessageSquare,
+  FileText,
+  Calendar,
+  BarChart3,
+  Settings,
+  ChevronLeft,
   ChevronRight,
   LogOut,
   ChevronDown,
@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store/uiStore";
 import { Avatar } from "@/components/ui/Avatar";
-import { useUser, useAuth } from "@/lib/clerk";
+import { useUser, useAuth } from "@clerk/nextjs";
 
 const themeGradients: Record<string, string> = {
   purple: "from-violet-600 to-fuchsia-500",
@@ -31,12 +31,12 @@ const themeGradients: Record<string, string> = {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { 
-    sidebarCollapsed, 
-    toggleSidebar, 
-    activeWorkspace, 
-    workspaces, 
-    setActiveWorkspace 
+  const {
+    sidebarCollapsed,
+    toggleSidebar,
+    activeWorkspace,
+    workspaces,
+    setActiveWorkspace
   } = useUIStore();
   const [showWorkspaceDropdown, setShowWorkspaceDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -77,10 +77,10 @@ export function Sidebar() {
           )}
         >
           <div className="flex items-center space-x-3">
-            <Avatar 
-              variant="workspace" 
-              theme={activeWorkspace.theme} 
-              initials={activeWorkspace.name.substring(0, 2)} 
+            <Avatar
+              variant="workspace"
+              theme={activeWorkspace.theme}
+              initials={activeWorkspace.name.substring(0, 2)}
             />
             {!sidebarCollapsed && (
               <div className="overflow-hidden">
@@ -114,11 +114,11 @@ export function Sidebar() {
                   }}
                   className="flex w-full items-center space-x-2.5 rounded-md px-2 py-2 text-left text-sm text-zinc-300 hover:bg-white/5 hover:text-white transition-all"
                 >
-                  <Avatar 
-                    variant="workspace" 
-                    size="sm" 
-                    theme={ws.theme} 
-                    initials={ws.name.substring(0, 2)} 
+                  <Avatar
+                    variant="workspace"
+                    size="sm"
+                    theme={ws.theme}
+                    initials={ws.name.substring(0, 2)}
                   />
                   <span className="truncate">{ws.name}</span>
                 </button>
@@ -167,7 +167,7 @@ export function Sidebar() {
               )}
 
               <Icon className={cn("relative z-10 h-5 w-5 shrink-0 transition-transform duration-200 group-hover:scale-105", isActive && "text-violet-400")} />
-              
+
               {!sidebarCollapsed && (
                 <motion.span
                   initial={{ opacity: 0 }}
@@ -201,17 +201,17 @@ export function Sidebar() {
                   <p className="text-[10px] text-zinc-500 truncate">{user?.primaryEmailAddress?.emailAddress || "john@aether.os"}</p>
                 </div>
               </div>
-              
-              <Link 
-                href={`/${workspaceSlug}/settings`} 
+
+              <Link
+                href={`/${workspaceSlug}/settings`}
                 onClick={() => setShowProfileDropdown(false)}
                 className="flex items-center space-x-2 w-full text-left px-2.5 py-1.5 text-xs text-zinc-400 hover:bg-white/5 hover:text-white rounded-lg transition-colors"
               >
                 <Settings className="h-3.5 w-3.5" />
                 <span>Настройки</span>
               </Link>
-              
-              <button 
+
+              <button
                 onClick={() => {
                   setShowProfileDropdown(false);
                   signOut();
@@ -226,7 +226,7 @@ export function Sidebar() {
         </AnimatePresence>
 
         <div className={cn("flex items-center justify-between", sidebarCollapsed ? "justify-center" : "")}>
-          <button 
+          <button
             onClick={() => !sidebarCollapsed && setShowProfileDropdown(!showProfileDropdown)}
             className="flex items-center space-x-3 text-left w-full hover:bg-white/5 p-1 rounded-lg transition-all"
           >
@@ -241,9 +241,9 @@ export function Sidebar() {
               <ChevronDown className="h-3.5 w-3.5 text-zinc-500 hover:text-white shrink-0 transition-transform" style={{ transform: showProfileDropdown ? 'rotate(180deg)' : 'none' }} />
             )}
           </button>
-          
+
           {sidebarCollapsed && (
-            <button 
+            <button
               onClick={() => signOut()}
               className="text-zinc-500 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-white/5 mt-1"
             >

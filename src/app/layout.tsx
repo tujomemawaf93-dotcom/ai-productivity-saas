@@ -1,39 +1,37 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
-import { ClerkProvider } from "@/lib/clerk";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+// Подключаем шрифт Inter для премиального интерфейса
+const inter = Inter({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
-  title: "Aether OS — Premium AI Productivity SaaS Platform",
-  description: "High-performance spatial workspace with integrated Gemini AI, smart notes, calendar, and analytics.",
+  title: "Aether OS — Интеллектуальное рабочее пространство",
+  description: "Премиальное ИИ-пространство для управления проектами и автоматизации",
 };
+
+export const dynamic = "force-dynamic";
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
     >
-      <body className="min-h-full flex flex-col">
-        <ClerkProvider>
+      <html lang="ru" className="dark" style={{ colorScheme: "dark" }}>
+        <body
+          className={`${inter.variable} font-sans antialiased bg-zinc-950 text-zinc-50 min-h-screen`}
+        >
           {children}
-        </ClerkProvider>
-      </body>
-    </html>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

@@ -32,6 +32,7 @@ model Workspace {
   userId             String
   user               User                @relation("WorkspaceOwner", fields: [userId], references: [id], onDelete: Cascade)
   notes              Note[]
+  folders            Folder[]
   chatSessions       ChatSession[]
   analyticsSnapshots AnalyticsSnapshot[]
   createdAt          DateTime            @default(now())
@@ -40,12 +41,27 @@ model Workspace {
   @@map("workspaces")
 }
 
+// Модель Папки для Заметок
+model Folder {
+  id          String    @id @default(uuid())
+  name        String
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  notes       Note[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("folders")
+}
+
 // Модель Умной Заметки (Note)
 model Note {
   id          String    @id @default(uuid())
   title       String
   content     String    @db.Text
   category    String    @default("General") // "Product" | "Design" | "Engineering" | "Marketing" | "General"
+  folderId    String?
+  folder      Folder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   userId      String
