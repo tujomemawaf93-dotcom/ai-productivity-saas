@@ -31,89 +31,95 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Last message must be from user" }, { status: 400 });
     }
 
-    // Убеждаемся, что пользователь существует в БД
-    await db.user.upsert({
-      where: { id: userId },
-      update: {},
-      create: {
-        id: userId,
-        email: "placeholder@email.com",
-      },
-    });
-
-    // Ищем запрошенный воркспейс, принадлежащий пользователю
-    let workspace = await db.workspace.findFirst({
-      where: { slug: workspaceId, userId },
-    });
-
-    // Фолбэк: если воркспейс не найден, берем первое доступное пространство пользователя
-    if (!workspace) {
-      workspace = await db.workspace.findFirst({
-        where: { userId }
-      });
-    }
-
-    // Супер-фолбэк (самовосстановление): если у пользователя вообще нет пространств
-    if (!workspace) {
-      const defaultSlug = `personal-${userId.toLowerCase()}`;
-      workspace = await db.workspace.create({
-        data: {
-          name: "Личное пространство",
-          slug: defaultSlug,
-          theme: "purple",
-          userId,
-        },
-      });
-    }
-
-    const dbWorkspaceId = workspace.id;
     let activeSessionId = sessionId;
 
-    // Автоматическое создание сессии диалога, если она еще не создана
-    if (!activeSessionId || activeSessionId === "new") {
-      const generatedTitle =
-        lastMessage.content.trim().substring(0, 30) +
-        (lastMessage.content.trim().length > 30 ? "..." : "");
-
-      const newSession = await db.chatSession.create({
-        data: {
-          title: generatedTitle || "Новый диалог",
-          workspaceId: dbWorkspaceId,
-          userId,
-        },
-      });
-      activeSessionId = newSession.id;
-    } else {
-      // Проверяем, что сессия принадлежит пользователю и текущему workspace
-      const existingSession = await db.chatSession.findFirst({
-        where: {
-          id: activeSessionId,
-          userId,
-          workspaceId: dbWorkspaceId,
+    try {
+      // Убеждаемся, что пользователь существует в БД
+      await db.user.upsert({
+        where: { id: userId },
+        update: {},
+        create: {
+          id: userId,
+          email: "placeholder@email.com",
         },
       });
 
-      if (!existingSession) {
-        return NextResponse.json({ error: "Chat session not found" }, { status: 404 });
+      // Ищем запрошенный воркспейс, принадлежащий пользователю
+      let workspace = await db.workspace.findFirst({
+        where: { slug: workspaceId, userId },
+      });
+
+      // Фолбэк: если воркспейс не найден, берем первое доступное пространство пользователя
+      if (!workspace) {
+        workspace = await db.workspace.findFirst({
+          where: { userId }
+        });
       }
 
-      // Обновляем updatedAt у сессии для подъема наверх списка
-      await db.chatSession.update({
-        where: { id: activeSessionId },
-        data: { updatedAt: new Date() },
+      // Супер-фолбэк (самовосстановление): если у пользователя вообще нет пространств
+      if (!workspace) {
+        const defaultSlug = `personal-${userId.toLowerCase()}`;
+        workspace = await db.workspace.create({
+          data: {
+            name: "Личное пространство",
+            slug: defaultSlug,
+            theme: "purple",
+            userId,
+          },
+        });
+      }
+
+      const dbWorkspaceId = workspace.id;
+
+      // Автоматическое создание сессии диалога, если она еще не создана
+      if (!activeSessionId || activeSessionId === "new") {
+        const generatedTitle =
+          lastMessage.content.trim().substring(0, 30) +
+          (lastMessage.content.trim().length > 30 ? "..." : "");
+
+        const newSession = await db.chatSession.create({
+          data: {
+            title: generatedTitle || "Новый диалог",
+            workspaceId: dbWorkspaceId,
+            userId,
+          },
+        });
+        activeSessionId = newSession.id;
+      } else {
+        // Проверяем, что сессия принадлежит пользователю и текущему workspace
+        const existingSession = await db.chatSession.findFirst({
+          where: {
+            id: activeSessionId,
+            userId,
+            workspaceId: dbWorkspaceId,
+          },
+        });
+
+        if (existingSession) {
+          // Обновляем updatedAt у сессии для подъема наверх списка
+          await db.chatSession.update({
+            where: { id: activeSessionId },
+            data: { updatedAt: new Date() },
+          });
+        }
+      }
+
+      // Сохраняем сообщение пользователя в БД
+      await db.message.create({
+        data: {
+          role: "user",
+          content: lastMessage.content,
+          sessionId: activeSessionId,
+        },
       });
+    } catch (dbError) {
+      console.error("🚨 Prisma DB Error, proceeding with stream fallback:", dbError);
+      if (!activeSessionId || activeSessionId === "new") {
+        activeSessionId = "fallback-session-id";
+      }
     }
 
-    // Сохраняем сообщение пользователя в БД
-    await db.message.create({
-      data: {
-        role: "user",
-        content: lastMessage.content,
-        sessionId: activeSessionId,
-      },
-    });
-
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
 
     if (!apiKey) {
       // Имитационный стриминг (Fallback-режим для изолированной песочницы), если ключ не задан
@@ -164,26 +170,43 @@ export async function POST(req: Request) {
 
     // Официальный вызов Gemini API через REST (streamGenerateContent)
     // Поддерживаем историю диалога для модели
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: messages.map((m: any) => ({
-            role: m.role === "model" ? "model" : "user",
-            parts: [{ text: m.content }],
-          })),
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2048,
-          },
-        })
-      }
-    );
+    let response: Response;
+    try {
+      const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key=${apiKey}`;
+      console.log("Calling Gemini API URL:", targetUrl.split("?")[0]);
+      response = await fetch(
+        targetUrl,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: messages.map((m: any) => ({
+              role: m.role === "model" ? "model" : "user",
+              parts: [{ text: m.content }],
+            })),
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 2048,
+            },
+          })
+        }
+      );
 
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.statusText}`);
+      if (!response.ok) {
+        let errorData: any = {};
+        try {
+          errorData = await response.json();
+        } catch (_) {
+          try {
+            errorData = { error: { message: await response.text() } };
+          } catch (_) {}
+        }
+        const googleMessage = errorData?.error?.message || response.statusText || "Неизвестная ошибка Google API";
+        return NextResponse.json({ error: `🚨 Google Gemini API Error: ${googleMessage}` }, { status: response.status });
+      }
+    } catch (apiError: any) {
+      console.error("🚨 Gemini API Network / Request Error:", apiError);
+      return NextResponse.json({ error: `🚨 Gemini API Network Error: ${apiError.message || apiError}` }, { status: 502 });
     }
 
     const encoder = new TextEncoder();

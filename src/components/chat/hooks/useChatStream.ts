@@ -220,7 +220,14 @@ export function useChatStream(workspaceId: string) {
       });
 
       if (!response.ok) {
-        throw new Error("Не удалось получить ответ от ИИ.");
+        let errMsg = "Не удалось получить ответ от ИИ.";
+        try {
+          const errData = await response.json();
+          if (errData && errData.error) {
+            errMsg = errData.error;
+          }
+        } catch (_) {}
+        throw new Error(errMsg);
       }
 
       // Извлекаем X-Chat-Session-Id для обновления активного сеанса
@@ -270,7 +277,7 @@ export function useChatStream(workspaceId: string) {
       const errorMessage: Message = {
         id: (Date.now() + 2).toString(),
         role: "model",
-        content: "🚨 Ошибка ИИ чата Aether. Убедитесь, что сервер базы данных доступен.",
+        content: err.message || "🚨 Ошибка ИИ чата Aether. Убедитесь, что сервер базы данных доступен.",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, errorMessage]);
